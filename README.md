@@ -119,7 +119,7 @@ cat > ~/.local/share/applications/mendeleydesktop.desktop << EOF
 Name=Mendeley Desktop
 GenericName=Research Paper Manager
 Comment=Mendeley Desktop is software for managing and sharing research papers
-Exec=env QT_AUTO_SCREEN_SCALE_FACTOR=1 QT_SCALE_FACTOR=1.0 QT_FONT_DPI=200 $INSTALL_DIR/start-mendeley.sh %f
+Exec=env QT_AUTO_SCREEN_SCALE_FACTOR=1 QT_SCALE_FACTOR=1.5 QT_FONT_DPI=200 $INSTALL_DIR/start-mendeley.sh %f
 Icon=$INSTALL_DIR/share/icons/hicolor/128x128/apps/mendeleydesktop.png
 Terminal=false
 Type=Application
