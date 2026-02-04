@@ -71,6 +71,52 @@ If the text is too small or too large, edit `start-mendeley.sh` and adjust the `
 - `1.5` = 50% larger (default)
 - `2.0` = 100% larger (double size)
 
+## Adding Desktop Entry (Application Menu)
+
+To make Mendeley Desktop appear in your applications menu:
+
+```bash
+cd /path/to/mendeleydesktop-1.19.8-linux-x86_64
+./install-desktop-entry.sh
+```
+
+This will create a desktop entry at `~/.local/share/applications/mendeleydesktop.desktop` and you'll be able to launch Mendeley from your application menu.
+
+### Manual Desktop Entry Installation
+
+If you prefer to install manually:
+
+```bash
+cd /path/to/mendeleydesktop-1.19.8-linux-x86_64
+INSTALL_DIR=$(pwd)
+mkdir -p ~/.local/share/applications
+
+cat > ~/.local/share/applications/mendeleydesktop.desktop << EOF
+[Desktop Entry]
+Name=Mendeley Desktop
+GenericName=Research Paper Manager
+Comment=Mendeley Desktop is software for managing and sharing research papers
+Exec=$INSTALL_DIR/start-mendeley.sh %f
+Icon=$INSTALL_DIR/share/icons/hicolor/128x128/apps/mendeleydesktop.png
+Terminal=false
+Type=Application
+Categories=Education;Literature;Qt;Science;
+MimeType=x-scheme-handler/mendeley;application/pdf;text/x-bibtex;
+X-Mendeley-Version=1.19.8
+StartupWMClass=mendeleydesktop
+EOF
+
+chmod +x ~/.local/share/applications/mendeleydesktop.desktop
+update-desktop-database ~/.local/share/applications
+```
+
+### Uninstalling Desktop Entry
+
+```bash
+rm ~/.local/share/applications/mendeleydesktop.desktop
+update-desktop-database ~/.local/share/applications
+```
+
 ## Known Issues
 
 - **gconf2 warning**: This is expected on Ubuntu 24.04 (package is obsolete). The warning is harmless and doesn't affect functionality.

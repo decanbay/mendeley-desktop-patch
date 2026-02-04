@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Mendeley Desktop
+GenericName=Research Paper Manager
+Comment=Mendeley Desktop is software for managing and sharing research papers
+Exec=MENDELEY_INSTALL_DIR/start-mendeley.sh %f
+Icon=MENDELEY_INSTALL_DIR/share/icons/hicolor/128x128/apps/mendeleydesktop.png
+Terminal=false
+Type=Application
+Categories=Education;Literature;Qt;Science;
+X-SuSE-translate=false
+MimeType=x-scheme-handler/mendeley;application/pdf;text/x-bibtex;
+X-Mendeley-Version=1.19.8
+StartupWMClass=mendeleydesktop
