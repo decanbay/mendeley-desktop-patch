@@ -22,32 +22,33 @@ Mendeley Desktop 1.19.8 doesn't work out of the box on Ubuntu 24.04 due to:
    cd mendeleydesktop-1.19.8-linux-x86_64
    ```
 
-3. **Install required dependencies**:
+3. **Clone this repository**:
+   ```bash
+   git clone https://github.com/decanbay/mendeley-desktop-patch.git
+   ```
+
+4. **Install required dependencies**:
    ```bash
    sudo apt install python3-setuptools
    ```
 
 ## Installation
 
-### Option 1: Automatic Patch (Recommended)
+### Option 1: Automatic Installation (Recommended)
 
 ```bash
-cd /path/to/mendeleydesktop-1.19.8-linux-x86_64
-patch -p1 < /path/to/mendeleydesktop.patch
-cp /path/to/start-mendeley.sh .
-chmod +x start-mendeley.sh
+cd mendeleydesktop-1.19.8-linux-x86_64
+bash mendeley-desktop-patch/install.sh
 ```
 
-### Option 2: Manual Fix
+### Option 2: Manual Patch
 
-1. **Fix Python compatibility** - Apply the changes from `mendeleydesktop.patch` to `bin/mendeleydesktop`
-
-2. **Add the launcher script** - Copy `start-mendeley.sh` to the Mendeley installation directory
-
-3. **Make it executable**:
-   ```bash
-   chmod +x start-mendeley.sh
-   ```
+```bash
+cd mendeleydesktop-1.19.8-linux-x86_64
+patch -p1 < mendeley-desktop-patch/mendeleydesktop.patch
+cp mendeley-desktop-patch/start-mendeley.sh .
+chmod +x start-mendeley.sh
+```
 
 ## Usage
 
@@ -69,8 +70,7 @@ To launch Mendeley from anywhere by just typing `mendeley`:
 ```bash
 mkdir -p ~/.local/bin
 cat > ~/.local/bin/mendeley << 'EOF'
-#!/bin/bash
-/path/to/mendeleydesktop-1.19.8-linux-x86_64/start-mendeley.sh "$@"
+~/mendeleydesktop-1.19.8-linux-x86_64/start-mendeley.sh "$@"
 EOF
 chmod +x ~/.local/bin/mendeley
 
@@ -79,6 +79,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
+Adjust the path if you extracted Mendeley to a different location
 Replace `/path/to/` with your actual installation directory.
 
 Now you can launch Mendeley from any terminal:
@@ -122,11 +123,11 @@ export QT_FONT_DPI=96
 
 To make Mendeley Desktop appear in your applications menu:
 
-```bash
-cd /path/to/mendeleydesktop-1.19.8-linux-x86_64
-./install-desktop-entry.sh
+```mendeleydesktop-1.19.8-linux-x86_64
+bash mendeley-desktop-patch/install-desktop-entry.sh
 ```
 
+This will create a desktop entry
 This will create a desktop entry at `~/.local/share/applications/mendeleydesktop.desktop` and you'll be able to launch Mendeley from your application menu.
 
 ### Manual Desktop Entry Installation
