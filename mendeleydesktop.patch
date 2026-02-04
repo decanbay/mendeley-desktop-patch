@@ -1,0 +1,302 @@
+--- /dev/null	2026-02-01 22:51:57.255082438 +1100
+@@ -1,8 +1,299 @@
+ #!/usr/bin/env python
+ 
+ from __future__ import print_function
+-import distutils.version
++try:
++    import distutils.version
++except ImportError:
++    # distutils was removed in Python 3.12, use packaging as fallback
++    try:
++        from packaging import version as distutils_version
++        class version:
++            class StrictVersion:
++                def __init__(self, vstring):
++                    self.version = distutils_version.parse(vstring)
++                def __cmp__(self, other):
++                    if self.version < other.version:
++                        return -1
++                    elif self.version > other.version:
++                        return 1
++                    return 0
++                def __lt__(self, other):
++                    return self.version < other.version
++                def __le__(self, other):
++                    return self.version <= other.version
++                def __gt__(self, other):
++                    return self.version > other.version
++                def __ge__(self, other):
++                    return self.version >= other.version
++                def __eq__(self, other):
++                    return self.version == other.version
++        distutils = type('distutils', (), {'version': version})()
++    except ImportError:
++        # If packaging is also not available, create a minimal implementation
++        class version:
++            class StrictVersion:
++                def __init__(self, vstring):
++                    self.vstring = vstring
++                    self.version = tuple(map(int, vstring.split('.')))
++                def __cmp__(self, other):
++                    if self.version < other.version:
++                        return -1
++                    elif self.version > other.version:
++                        return 1
++                    return 0
++                def __lt__(self, other):
++                    return self.version < other.version
++                def __le__(self, other):
++                    return self.version <= other.version
++                def __gt__(self, other):
++                    return self.version > other.version
++                def __ge__(self, other):
++                    return self.version >= other.version
++                def __eq__(self, other):
++                    return self.version == other.version
++        distutils = type('distutils', (), {'version': version})()
+ import os
+ import platform
+ import subprocess
+ import sys
++
++def library_paths():
++    """ Returns a list of paths where libraries can be found: LD_LIBRARY_PATH followed by
++    standard system paths.
++    """
++    paths = []
++
++    # Check paths listed in LD_LIBRARY_PATH environment variable
++    # (starting with the first path)
++    if "LD_LIBRARY_PATH" in os.environ:
++        ld_library_paths = os.environ["LD_LIBRARY_PATH"].split(":")
++        for path in ld_library_paths:
++            if len(path) > 0:
++                paths.append(path)
++
++    # Check default system library paths
++    paths.append("/lib64")
++    paths.append("/lib")
++    paths.append("/usr/lib64")
++    paths.append("/usr/lib")
++    paths.append("/usr/lib/x86_64-linux-gnu")
++    paths.append("/usr/lib/i386-linux-gnu")
++
++    return paths
++
++def library_version_from_path(lib_path):
++    """ Returns the version or None of lib_path. """
++    if lib_path:
++        suffix = ".so."
++        suffix_pos = lib_path.find(suffix)
++        version_string = lib_path[suffix_pos + len(suffix):]
++
++        return version_string
++    else:
++        return None
++
++def find_library(library_name):
++    """ Returns the path for library_name or None if it's not found. """
++    lib_path = None
++
++    for path in library_paths():
++        candidate_lib_path = path + '/' + library_name
++
++        if os.path.exists(candidate_lib_path):
++            lib_path = os.path.realpath(candidate_lib_path)
++            break
++
++    return lib_path
++
++def get_paths():
++    """ Returns a dictionary with all the paths needed by other functions. """
++
++    results = {}
++
++    results['SCRIPT'] = os.path.realpath(__file__)
++
++    # Base path of actual Mendeley Desktop binary and
++    # bundled libraries relative to this script
++    if is_linux_distro_build():
++        results['MENDELEY_BASE'] = sys.path[0] + "/../../opt/mendeleydesktop"
++        results['MENDELEY_BIN'] = results['MENDELEY_BASE'] + "/bin/mendeleydesktop"
++        results['MENDELEY_BUNDLED_QT_PLUGIN'] = results['MENDELEY_BASE'] + "/plugins/qt/plugins/"
++    else:
++        results['MENDELEY_BASE'] = sys.path[0] + "/../"
++        if platform.architecture()[0] == "64bit":
++            results['MENDELEY_BIN'] = results['MENDELEY_BASE'] + "/lib/mendeleydesktop/libexec/mendeleydesktop.x86_64"
++        else:
++            results['MENDELEY_BIN'] = results['MENDELEY_BASE'] + "/lib/mendeleydesktop/libexec/mendeleydesktop.i486"
++
++        results['MENDELEY_BUNDLED_QT_PLUGIN'] = results['MENDELEY_BASE'] + "/lib/mendeleydesktop/plugins/"
++
++    # Path to Mendeley Desktop and PDFNet libraries
++    results['MENDELEY_LIB'] = results['MENDELEY_BASE'] + "/lib/"
++    results['MENDELEY_BUNDLED_CPP_LIB'] = results['MENDELEY_BASE'] + "/lib/cpp/"
++    results['MENDELEY_BUNDLED_SSL_LIB'] = results['MENDELEY_BASE'] + "/lib/ssl/"
++
++    # Path to bundled Qt libraries
++    results['MENDELEY_BUNDLED_QT_LIBRARY'] = results['MENDELEY_BASE'] + "/lib/qt/"
++
++    return results
++
++def should_use_bundled_libstdc():
++    """ Returns True if the system's libstdc++ is not new enough for Mendeley
++    Desktop.
++    """
++
++    # Check C++ runtime library version
++    # The minimum C++ runtime lib version depends on the highest GLIBCXX_3.X.YY
++    # symbol referenced in any of the bundled libraries, which corresponds to
++    # the 'libstdc++.so.6.X.YY' lib names
++    MINIMUM_CPP_VERSION = "6.0.15"
++
++    cpp_runtime_lib = find_library("libstdc++.so.6")
++    cpp_runtime_version = library_version_from_path(cpp_runtime_lib)
++
++    if distutils.version.LooseVersion(cpp_runtime_version) < distutils.version.LooseVersion(MINIMUM_CPP_VERSION):
++        print("Using bundled C++ runtime libraries")
++        return True
++    else:
++        return False
++
++def should_use_bundled_libssl():
++    """ Returns True if the system's libssl is NOT available. """
++    MINIMUM_SSL_VERSION = "1.0"
++    MAXIMUM_SSL_VERSION = "1.0"
++
++    distutils_minimum_ssl_version = distutils.version.LooseVersion(MINIMUM_SSL_VERSION)
++    distutils_maximum_ssl_version = distutils.version.LooseVersion(MAXIMUM_SSL_VERSION)
++    
++    ssl_system_lib = find_library("libssl.so")
++    ssl_system_version = library_version_from_path(ssl_system_lib)
++
++    if ssl_system_lib is None:
++        # Not available, let's use the bundled libssl
++        return True
++    elif ssl_system_version > distutils_maximum_ssl_version or ssl_system_version < distutils_minimum_ssl_version:
++        # Available but not the required version, use the bundled libssl
++        return True
++    else:
++        # Available on the system and correct version. Use it
++        return False
++
++def set_environment():
++    """ Prepares the environment variables to run Mendeley Desktop. Specially
++    the LD_LIBRARY_PATH.
++    """
++
++    # Save the path to the script which started Mendeley, used to restart
++    # Mendeley after an auto-update
++    os.environ["MENDELEY_GENERIC"] = get_paths()['SCRIPT']
++
++    # Path to the BUNDLED_QT_PLUGIN
++    os.environ["MENDELEY_BUNDLED_QT_PLUGIN_PATH"] = get_paths()['MENDELEY_BUNDLED_QT_PLUGIN']
++
++    if "LD_LIBRARY_PATH" in os.environ:
++        # We will keep the previous values (after Mendeley libraries)
++        new_lib_paths = os.environ["LD_LIBRARY_PATH"].split(":")
++
++        # Save the original library path so that Mendeley can launch
++        # external applications without them inheriting the library path changes
++        # made by this script
++        os.environ["LD_LIBRARY_PATH_ORIGINAL"] = os.environ["LD_LIBRARY_PATH"]
++    else:
++        new_lib_paths = []
++        os.environ["LD_LIBRARY_PATH_ORIGINAL"] = ""
++
++    new_lib_paths.insert(0,get_paths()['MENDELEY_BUNDLED_QT_LIBRARY'])
++
++    new_lib_paths.insert(0,get_paths()['MENDELEY_LIB'])
++
++    # Uses the bundled libstdc path if needed
++    if should_use_bundled_libstdc():
++        new_lib_paths.insert(0,get_paths()['MENDELEY_BUNDLED_CPP_LIB'])
++
++    if should_use_bundled_libssl():
++        new_lib_paths.insert(0,get_paths()['MENDELEY_BUNDLED_SSL_LIB'])
++
++    os.environ["LD_LIBRARY_PATH"] = ":".join(new_lib_paths)
++
++def is_linux_distro_build():
++    """ Check if this is a 'generic Linux' build (which could be installed anywhere)
++        or an Ubuntu/Debian build (installed to /usr/bin/mendeleydesktop
++        with other files in /opt/mendeleydesktop).
++    """
++    return not os.path.exists(os.path.dirname(os.path.realpath(__file__)) + "/../lib/mendeleydesktop/")
++
++def sanity_checks():
++    """ If Mendeley Desktop binary can't be found exits the process. """
++    if not os.path.exists(get_paths()['MENDELEY_BIN']):
++        print("Can't find Mendeley Desktop binary. Expected:",get_paths()['MENDELEY_BIN'])
++        print("Unable to start Mendeley Desktop, the software may not be installed correctly.")
++        exit(1)
++
++def mendeley_desktop_arguments():
++    """ Returns a list with the argumetns to be appended to Mendeley Desktop. """
++    extra_args = sys.argv[1:]
++
++    if is_linux_distro_build():
++        # Enable Linux distro specific changes (eg. in auto-update
++        # handling)
++        extra_args = extra_args + ["--unix-distro-build"]
++
++    use_debugger = sys.argv.count("--debug") > 0
++
++    gdb = []
++    if use_debugger:
++        extra_args.remove("--debug") # This option is for the launcher, not Mendeley Desktop
++        gdb = ["gdb", "--args"]
++
++    if "--debug-launcher" in extra_args:    # Option for the launcher
++        extra_args.remove("--debug-launcher")
++
++    args = gdb + [get_paths()['MENDELEY_BIN']] + extra_args
++
++    return args
++
++def print_launcher_information():
++    import pprint
++    def print_environment_variable(environment):
++        print(environment,os.environ.get(environment, ""))
++
++    print("")
++    print("PATHS:")
++    pprint.pprint(get_paths())
++
++    print("")
++    print("ENVIRONMENT:")
++    print_environment_variable("LD_LIBRARY_PATH")
++    print_environment_variable("LD_LIBRARY_PATH_ORIGINAL")
++    print_environment_variable("MENDELEY_BUNDLED_QT_PLUGIN_PATH")
++
++    print("")
++
++def launch_mendeley_desktop():
++    sanity_checks()
++    set_environment()
++    paths = get_paths()
++
++    if sys.argv.count("--debug-launcher"):
++        print_launcher_information()
++
++    try:
++        # change the mendeley:// link handler to use the current Mendeley Desktop binary
++        subprocess.Popen([paths['MENDELEY_BASE']+"/bin/install-mendeley-link-handler.sh",paths['SCRIPT']])
++
++        args = mendeley_desktop_arguments()
++
++        # Runs main Mendeley Desktop application.
++        result = subprocess.call(args)
++        sys.exit(result)
++
++    except OSError:
++        # use exc_info() to get the exception object for compatibility with
++        # Python 2.5 and 3.x
++        error = sys.exc_info()[1]
++
++        print("\nUnable to start Mendeley Desktop: " + str(error))
++        print("For further help, please visit http://support.mendeley.com")
++
++if __name__ == "__main__":
++    launch_mendeley_desktop()
