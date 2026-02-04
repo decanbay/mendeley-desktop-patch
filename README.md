@@ -64,12 +64,31 @@ The launcher script:
 
 ## Customizing Text Scale
 
-If the text is too small or too large, edit `start-mendeley.sh` and adjust the `QT_SCALE_FACTOR` value:
+The default settings work well for Full HD (1920x1080) displays. If the text is too small or too large for your screen, edit `start-mendeley.sh` and adjust these values:
 
-- `1.0` = Normal size
-- `1.25` = 25% larger
-- `1.5` = 50% larger (default)
-- `2.0` = 100% larger (double size)
+### For Full HD (1920x1080) screens - Default:
+```bash
+export QT_SCALE_FACTOR=0.5
+export QT_FONT_DPI=500
+```
+
+### For High DPI / 4K displays:
+```bash
+export QT_SCALE_FACTOR=1.5
+export QT_FONT_DPI=96
+```
+
+### Other common configurations:
+- **Small text** (increase if too small):
+  - `QT_SCALE_FACTOR=1.0` and `QT_FONT_DPI=96`
+  
+- **Medium text**:
+  - `QT_SCALE_FACTOR=1.25` and `QT_FONT_DPI=120`
+
+- **Large text**:
+  - `QT_SCALE_FACTOR=2.0` and `QT_FONT_DPI=96`
+
+**Tip**: The combination of `QT_SCALE_FACTOR` and `QT_FONT_DPI` affects both UI elements and text. Experiment to find what works best for your display.
 
 ## Adding Desktop Entry (Application Menu)
 
