@@ -64,13 +64,16 @@ The launcher script:
 
 ## Customizing Text Scale
 
-The default settings work well for Full HD (1920x1080) displays. If the text is too small or too large for your screen, edit `start-mendeley.sh` and adjust these values:
+The default settings work well for Full HD (1920x1080) displays with balanced icon and text sizes. 
+
+**Important**: `QT_SCALE_FACTOR` scales icons and UI elements, while `QT_FONT_DPI` scales text. Adjust both to keep them balanced.
 
 ### For Full HD (1920x1080) screens - Default:
 ```bash
-export QT_SCALE_FACTOR=0.5
-export QT_FONT_DPI=500
+export QT_SCALE_FACTOR=1.0
+export QT_FONT_DPI=200
 ```
+This provides good balance between icon size and text size.
 
 ### For High DPI / 4K displays:
 ```bash
@@ -78,17 +81,18 @@ export QT_SCALE_FACTOR=1.5
 export QT_FONT_DPI=96
 ```
 
+### Fine-tuning tips:
+- **Icons too small?** Increase `QT_SCALE_FACTOR` (e.g., 1.25, 1.5, 2.0)
+- **Text too small?** Increase `QT_FONT_DPI` (e.g., 120, 150, 200)
+- **Icons too large?** Decrease `QT_SCALE_FACTOR` (e.g., 0.75, 0.5)
+- **Text too large?** Decrease `QT_FONT_DPI` (e.g., 96, 120)
+
 ### Other common configurations:
-- **Small text** (increase if too small):
-  - `QT_SCALE_FACTOR=1.0` and `QT_FONT_DPI=96`
-  
-- **Medium text**:
-  - `QT_SCALE_FACTOR=1.25` and `QT_FONT_DPI=120`
+- **Small overall**: `QT_SCALE_FACTOR=0.75` and `QT_FONT_DPI=96`
+- **Medium overall**: `QT_SCALE_FACTOR=1.25` and `QT_FONT_DPI=150`
+- **Large overall**: `QT_SCALE_FACTOR=2.0` and `QT_FONT_DPI=96`
 
-- **Large text**:
-  - `QT_SCALE_FACTOR=2.0` and `QT_FONT_DPI=96`
-
-**Tip**: The combination of `QT_SCALE_FACTOR` and `QT_FONT_DPI` affects both UI elements and text. Experiment to find what works best for your display.
+**Tip**: Keep the ratio between `QT_SCALE_FACTOR` and `QT_FONT_DPI` balanced. If icons and text don't match, adjust one value at a time.
 
 ## Adding Desktop Entry (Application Menu)
 
