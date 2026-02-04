@@ -58,9 +58,33 @@ Run Mendeley Desktop using the launcher script:
 ```
 
 The launcher script:
-- Fixes text scaling issues (1.5x by default)
-- Filters out deprecation warnings for cleaner output
+- Fixes text scaling issues (1.0x scale, 200 DPI by default)
 - Sets proper Qt environment variables for modern displays
+- Suppresses deprecation warnings
+
+### Adding `mendeley` Command to PATH
+
+To launch Mendeley from anywhere by just typing `mendeley`:
+
+```bash
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/mendeley << 'EOF'
+#!/bin/bash
+/path/to/mendeleydesktop-1.19.8-linux-x86_64/start-mendeley.sh "$@"
+EOF
+chmod +x ~/.local/bin/mendeley
+
+# Add to PATH if not already there
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Replace `/path/to/` with your actual installation directory.
+
+Now you can launch Mendeley from any terminal:
+```bash
+mendeley
+```
 
 ## Customizing Text Scale
 
@@ -119,7 +143,8 @@ cat > ~/.local/share/applications/mendeleydesktop.desktop << EOF
 Name=Mendeley Desktop
 GenericName=Research Paper Manager
 Comment=Mendeley Desktop is software for managing and sharing research papers
-Exec=env QT_AUTO_SCREEN_SCALE_FACTOR=1 QT_SCALE_FACTOR=1.5 QT_FONT_DPI=200 $INSTALL_DIR/start-mendeley.sh %f
+Exec=env QT_AUTO_SCREEN_SCALE_FACTOR=1 QT_SCALE_FACTOR=1.5 QT_FONT_DPI=bin/mendeleydesktop
+- **Desktop entry quit issues**: When launched from GNOME menu, the application may not quit cleanly. Use `pkill -f mendeleydesktop` if needed, or prefer launching from terminal with `mendeley` command.200 $INSTALL_DIR/start-mendeley.sh %f
 Icon=$INSTALL_DIR/share/icons/hicolor/128x128/apps/mendeleydesktop.png
 Terminal=false
 Type=Application
