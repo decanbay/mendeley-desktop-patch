@@ -1,6 +1,5 @@
 #!/bin/bash
 # Mendeley Desktop Launcher for Ubuntu 24.04
-# Suppresses deprecation warnings for cleaner output
 
 # Fix text scaling for displays
 # QT_SCALE_FACTOR scales icons and UI elements
@@ -14,4 +13,5 @@ export QT_SCALE_FACTOR=1.0
 export QT_FONT_DPI=200
 
 cd "$(dirname "$0")"
-./bin/mendeleydesktop 2>&1 | grep -v "DeprecationWarning" | grep -v "distutils Version classes"
+# Run without grep to avoid keeping processes alive after quit
+./bin/mendeleydesktop 2>/dev/null
