@@ -19,13 +19,13 @@ mkdir -p "$HOME/.local/share/applications"
 echo "Creating desktop entry for Mendeley Desktop..."
 echo "Installation directory: $INSTALL_DIR"
 
-# Create the desktop file
+# Create the desktop file with environment variables
 cat > "$DESKTOP_FILE" << EOF
 [Desktop Entry]
 Name=Mendeley Desktop
 GenericName=Research Paper Manager
 Comment=Mendeley Desktop is software for managing and sharing research papers
-Exec=$INSTALL_DIR/start-mendeley.sh %f
+Exec=env QT_AUTO_SCREEN_SCALE_FACTOR=1 QT_SCALE_FACTOR=1.0 QT_FONT_DPI=200 $INSTALL_DIR/start-mendeley.sh %f
 Icon=$INSTALL_DIR/share/icons/hicolor/128x128/apps/mendeleydesktop.png
 Terminal=false
 Type=Application
