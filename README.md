@@ -2,6 +2,7 @@
 
 This repository contains patches and scripts to fix Mendeley Desktop 1.19.8 compatibility issues on Ubuntu 24.04.
 
+**If it still does not work after performing below** it is either python is not recognised ```sudo apt-get install python-is-python3```,  and/or you are on wayland and you have to do  ```echo 'export QT_QPA_PLATFORM=xcb' >> ~/.bashrc``` and/or you do not have the older QT libs, and do ```sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libglu1-mesa ```
 ## Problem
 
 Mendeley Desktop 1.19.8 doesn't work out of the box on Ubuntu 24.04 due to:
